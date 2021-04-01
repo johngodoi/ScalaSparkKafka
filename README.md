@@ -16,7 +16,7 @@ docker-compose logs zookeeper | grep -i binding #check logs from zookeeper
 docker-compose logs kafka | grep -i started #check logs from kafka
 ```
 
-# Test drive
+## Test drive
 
 ```shell
 # creating a new topic
