@@ -18,6 +18,7 @@ object SparkKafka extends App {
     .appName("SparkXKafka")
     .master("local[*]")
   .getOrCreate()
+  spark.sparkContext.setLogLevel("ERROR")
   import spark.implicits._
 
   // Load the data from the New York City Taxi data REST API for 2016 Green Taxi Trip Data
@@ -36,7 +37,7 @@ object SparkKafka extends App {
   println("Finished setting Kafka broker and topic configuration.")
 
   // Select the vendorid as the key and save the JSON string as the value.
-  var query = taxiDF
+  val query = taxiDF
     .selectExpr("CAST(vendorid AS STRING) as key", "to_JSON(struct(*)) AS value")
     .write
     .format("kafka")
@@ -79,8 +80,9 @@ object SparkKafka extends App {
   val kafkaDF = spark.read.format("kafka").option("kafka.bootstrap.servers", kafkaBrokers).option("subscribe", kafkaTopic).option("startingOffsets", "earliest").load()
 
   // Select data and write to file
-  query = kafkaDF.select(from_json(col("value").cast("string"), schema) as "trip").write.format("parquet").option("path","./example/batchtripdata").option("checkpointLocation", "./batchcheckpoint").save()
-
+  val queryRead = kafkaDF.select(from_json(col("value").cast("string"), schema) as "trip").cache()
+  queryRead.write.format("parquet").option("path","./example/batchtripdata").option("checkpointLocation", "./batchcheckpoint").save()
+  queryRead.show()
   println("Wrote data to file")
 
   // Stream from Kafka
@@ -88,6 +90,9 @@ object SparkKafka extends App {
 
   // Select data from the stream and write to file
   kafkaStreamDF.select(from_json(col("value").cast("string"), schema) as "trip").writeStream.format("parquet").option("path","./example/streamingtripdata").option("checkpointLocation", "./streamcheckpoint").start.awaitTermination(30000)
+
   println("Wrote data to file")
+
+  spark.stop()
 
 }

@@ -52,3 +52,9 @@ docker-compose exec kafka bash -c "seq 100 | kafka-console-producer --request-re
 #Consuming 100 messages
 docker-compose exec kafka kafka-console-consumer --bootstrap-server kafka:9092 --topic meu-topico-legal --from-beginning --max-messages 100
 ```
+
+## How to run
+
+```shell
+sbt run
+```
